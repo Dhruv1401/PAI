@@ -1,0 +1,4 @@
+llama-cpp-python
+pyttsx3
+speechrecognition
+pyaudio
