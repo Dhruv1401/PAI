@@ -1,7 +1,6 @@
-# 🧠 RPI-Assisted AI Assistant (formerly TARS 3.0)
+# 🧠 Personal AI assistant.
 
-A modular, plugin-driven AI assistant designed for Raspberry Pi and desktop environments. Inspired by real-world robotics and space exploration, this assistant supports both voice and text interfaces, dynamic plugin management, and powerful LLM-based conversation capabilities.
-
+A modular, AI assistant designed for Raspberry Pi and desktop environments. Inspired by real-world robotics and fantasies, this assistant supports both voice and text interfaces, dynamic plugin management, and mediocre LLM-based conversation capabilities.
 ---
 
 ## 🚀 Features
@@ -19,8 +18,8 @@ A modular, plugin-driven AI assistant designed for Raspberry Pi and desktop envi
 ## 🛠️ Installation
 
 ```bash
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/Dhruv1401/PAI.git
+cd PAI
 pip install -r requirements.txt
 ```
 
