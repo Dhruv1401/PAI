@@ -1,7 +1,3 @@
-Here’s the full, copy-paste–ready `README.md` for your assistant — already styled and structured with markdown syntax:
-
----
-
 ```markdown
 # 🧠 RPI-Assisted AI Assistant (formerly TARS 3.0)
 
@@ -29,16 +25,6 @@ cd <repo-name>
 pip install -r requirements.txt
 ```
 
-### 🔑 Set up Hugging Face API
-Create a `.env` file in the project root:
-
-```env
-HF_TOKEN=your_huggingface_token
-MODEL_ID=mistralai/Mistral-7B-Instruct-v0.2
-```
-
----
-
 ## 🧩 Plugin Commands
 
 Inside the assistant chat, use:
@@ -62,7 +48,6 @@ project_root/
 ├── core/                   # Brain logic and async handler
 ├── memory/                 # Memory management system
 ├── logs/                   # Session-based logs
-├── .env                    # API keys and model ID
 └── requirements.txt        # Python dependencies
 ```
 
@@ -84,9 +69,6 @@ project_root/
 
 ## 🛤️ Roadmap
 
-- [ ] Add GUI overlay for interaction
-- [ ] Local model inference support
-- [ ] Emotion and tone detection
 - [ ] Hardware integration (robotics movement)
 - [ ] Auto plugin updates and sync
 
@@ -108,9 +90,9 @@ MIT License. Use freely with attribution.
 
 - Mistral-7B (via Hugging Face)
 - Project architecture and vision: You (and your futuristic brain)
-- Inspiration: *TARS* from Interstellar, Raspberry Pi robotics, voice automation
+- Inspiration: *TARS* from Interstellar, Raspberry Pi robotics, voice automation.
+- Made with ❤️, 🧠,ChatGPT(by openai) and lots of dedication.
 ```
 
 ---
 
-You can paste this directly into your `README.md`. Once you finalize a **new name** (e.g., `NOVA`, `HALPi`, `PiMind`, etc.), I can easily update the branding line at the top for you. Let me know if you'd like suggestions for a final name!
