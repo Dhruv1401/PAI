@@ -1,4 +1,3 @@
-```markdown
 # 🧠 RPI-Assisted AI Assistant (formerly TARS 3.0)
 
 A modular, plugin-driven AI assistant designed for Raspberry Pi and desktop environments. Inspired by real-world robotics and space exploration, this assistant supports both voice and text interfaces, dynamic plugin management, and powerful LLM-based conversation capabilities.
