@@ -1,6 +1,6 @@
 # 🧠 Personal AI assistant.
 
-A modular, AI assistant designed for Raspberry Pi and desktop environments. Inspired by real-world robotics and fantasies, this assistant supports both voice and text interfaces, dynamic plugin management, and mediocre LLM-based conversation capabilities.
+ A modular, AI assistant designed for Raspberry Pi and desktop environments. Inspired by real-world robotics and fantasies, this assistant supports both voice and text interfaces, dynamic plugin management, and mediocre LLM-based conversation capabilities.
 ---
 
 ## 🚀 Features
