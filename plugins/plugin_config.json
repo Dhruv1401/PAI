@@ -2,6 +2,6 @@
   "sample_greet": true,
   "weather": true,
   "self_diagnostics": true,
-  "voice_interface": false,
-  "text_interface": true
+  "voice_interface": true,
+  "text_interface": false
 }

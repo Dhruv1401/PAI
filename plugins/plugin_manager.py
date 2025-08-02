@@ -1,5 +1,3 @@
-# plugins/plugin_manager.py
-
 import os
 import importlib
 import json
@@ -57,7 +55,43 @@ def show_plugin_dashboard():
     print("  plugin enable <name>")
     print("  plugin disable <name>\n")
 
-# Load debug plugin if enabled
+    # Show running plugins list
+    print("🔌 Enabled Plugins:", ", ".join(get_enabled_plugins()))
+
+    return "voice_interface" in get_enabled_plugins()
+
+def handle_plugin_command(command):
+    tokens = command.strip().split()
+    if len(tokens) < 2:
+        print("[PluginManager] Invalid plugin command.")
+        return
+
+    config = load_plugin_config()
+
+    action, name = tokens[1], tokens[2] if len(tokens) > 2 else None
+
+    if action == "list":
+        print("Available plugins:")
+        for filename in os.listdir(PLUGIN_FOLDER):
+            if filename.endswith(".py") and filename != "plugin_manager.py":
+                print(f"  - {filename[:-3]}")
+    elif action == "enable" and name:
+        config[name] = True
+        # Auto-toggle voice/text interface
+        if name == "voice_interface":
+            config["text_interface"] = False
+        elif name == "text_interface":
+            config["voice_interface"] = False
+        save_plugin_config(config)
+        print(f"✅ Plugin '{name}' enabled.")
+    elif action == "disable" and name:
+        config[name] = False
+        save_plugin_config(config)
+        print(f"❌ Plugin '{name}' disabled.")
+    else:
+        print("[PluginManager] Invalid plugin command.")
+
+# Auto-init debug logger
 enabled_plugins = get_enabled_plugins()
 if "debug_logger" in enabled_plugins:
     try:
@@ -66,4 +100,3 @@ if "debug_logger" in enabled_plugins:
         print("[PluginManager] Debug logger initialized.")
     except Exception as e:
         print(f"[PluginManager] Failed to initialize debug logger: {e}")
-
