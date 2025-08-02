@@ -7,3 +7,6 @@ venv/
 llm/models/
 llm/
 *.mistral-7b-instruct-v0.2.Q3_K_L.gguf
+
+memory/
+*.startup_memory.json
