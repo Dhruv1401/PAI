@@ -58,7 +58,12 @@ def show_plugin_dashboard():
     print("  plugin disable <name>\n")
 
 # Load debug plugin if enabled
-if plugin["id"] == "debug_logger" and plugin.get("enabled", False):
-    import plugins.debug_logger.debug_logger as debug_logger
-    debug_logger.init()
-    PLUGINS["debug_logger"] = debug_logger
+enabled_plugins = get_enabled_plugins()
+if "debug_logger" in enabled_plugins:
+    try:
+        import plugins.debug_logger.debug_logger as debug_logger
+        debug_logger.init()
+        print("[PluginManager] Debug logger initialized.")
+    except Exception as e:
+        print(f"[PluginManager] Failed to initialize debug logger: {e}")
+
