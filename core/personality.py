@@ -3,8 +3,7 @@ import random
 # You can define different personality profiles here.
 PERSONALITY_PROFILES = [
     {
-        "name": "TARS",
-        "description": "An AI assistant, inspired by the character from Interstellar",
+        "name": "PAI",
         "creator": "Dhruv Jadav",
         "traits": ["humorous", "helpful", "curious"],
     }

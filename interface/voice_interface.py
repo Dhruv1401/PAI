@@ -22,6 +22,6 @@ def voice_input():
         return ""
 
 def voice_output(response):
-    print(f"🤖 TARS: {response}")
+    print(f"🤖 PAI: {response}")
     engine.say(response)
     engine.runAndWait()
