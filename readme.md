@@ -108,7 +108,3 @@ MIT License.
 - Project architecture and vision: You (and your futuristic brain)
 - Inspiration: *TARS* from Interstellar, Raspberry Pi robotics, voice automation.
 - Made with ❤️, 🧠,ChatGPT(by openai) and lots of dedication.
-```
-
----
-
