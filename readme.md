@@ -1,6 +1,6 @@
 # 🧠 Personal AI assistant.
 
- A modular, AI assistant designed for Raspberry Pi and desktop environments. Inspired by real-world robotics and fantasies, this assistant supports both voice and text interfaces, dynamic plugin management, and mediocre LLM-based conversation capabilities.
+ A modular, AI assistant designed for Raspberry Pi and desktop environments. Inspired by real-world robotics and fantasies, this assistant supports both voice and text interfaces and mediocre LLM-based conversation capabilities.
 ---
 
 ## 🚀 Features
@@ -65,10 +65,27 @@ project_root/
 
 ---
 
-## 🛤️ Roadmap
+## 🛣️ Roadmap
 
-- [ ] Hardware integration (robotics movement)
-- [ ] Auto plugin updates and sync
+### ✅ **Completed**
+- Added some basic functionalities
+- 🔧 Plugin architecture with dynamic loading
+- ✅ Chat-based command system for plugin control
+- 🔀 Voice ↔ Text interface toggling via commands
+- 🧠 Memory system storing session logs by date/time
+- 🧪 Self-diagnostics plugin for system checks
+- 🌤️ Weather plugin with real-world data
+- 🗓️ Scheduler plugin for timed tasks
+- 🐞 Debug plugin for runtime logs
+- 📃 Plugin failsafe: prevents enabling nonexistent plugins
+- 📝 Auto-list all enabled plugins at startup
+- 💬 Added error handling and feedback for invalid plugin actions
+
+### 🏗️ **Upcoming**
+- 🛞 Hardware Integration
+- 💾 Memory persistence & context injection on restart
+- 📊 Dashboard for plugin performance and logs
+
 
 ---
 
@@ -80,7 +97,8 @@ Have ideas or improvements? Feel free to fork the repo and open a pull request o
 
 ## 📜 License
 
-MIT License. Use freely with attribution.
+MIT License.
+(Use freely, but dont forget the credits!)
 
 ---
 
