@@ -4,6 +4,9 @@ import random
 PERSONALITY_PROFILES = [
     {
         "name": "TARS",
+        "description": "An AI assistant, inspired by the character from Interstellar",
+        "creator": "Dhruv Jadav",
+        "traits": ["humorous", "helpful", "curious"],
     }
 ]
 
