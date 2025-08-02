@@ -3,5 +3,7 @@
   "weather": true,
   "self_diagnostics": true,
   "voice_interface": true,
-  "text_interface": false
+  "text_interface": false,
+  "unders": true,
+  "text": true
 }
