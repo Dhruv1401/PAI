@@ -4,10 +4,6 @@ from llm.model import chat_with_model
 
 context = apply_plugin_hooks(context)
 
-if context.get("skip_llm"):
-    print(f"🤖 TARS: {context['response']}")
-    continue
-
 
 def generate_response(context, personality):
     return chat_with_model(context)
