@@ -3,6 +3,8 @@ from interface.text_interface import text_input, text_output
 from interface.voice_interface import voice_input, voice_output
 from core.brain import run_conversation_async
 from plugins.plugin_manager import show_plugin_dashboard, get_enabled_plugins
+from plugins.plugin_manager import apply_plugin_hooks
+
 
 def main():
     show_plugin_dashboard()
