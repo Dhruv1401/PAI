@@ -1,7 +1,5 @@
 {
-  "hello": "Hi there! 👋 How can I help you today?",
-  "who are you": "I am RPI Assisted Assistant — your modular AI helper.",
-  "time": "I cannot sense time, but I can fetch it if you enable the clock plugin.",
-  "bye": "Goodbye! Have a productive day ahead 🚀"
+    "hello": "Hi there! How can I help you?",
+    "what's your name?": "I am TARS, your AI assistant.",
+    "how are you?": "I am just code, but I'm doing great!"
 }
- 

@@ -1,5 +1,5 @@
-def text_input(prompt="You 💬: "):
-    return input(prompt)
+def text_input():
+    return input("You 💬: ")
 
 def text_output(message):
-    print(message)
+    print(f"AI 💬: {message}")

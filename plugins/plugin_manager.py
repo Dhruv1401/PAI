@@ -3,77 +3,73 @@ import importlib
 import json
 
 PLUGIN_FOLDER = os.path.join(os.path.dirname(__file__))
-ENABLED_PLUGINS_FILE = os.path.join(PLUGIN_FOLDER, "enabled_plugins.json")
+ENABLED_PLUGINS_FILE = os.path.join(PLUGIN_FOLDER, "plugin_config.json")
 
-# Load enabled plugins from JSON file
+# Load enabled plugins
 def load_enabled_plugins():
     if not os.path.exists(ENABLED_PLUGINS_FILE):
-        return []
+        return {}
     with open(ENABLED_PLUGINS_FILE, "r") as f:
         return json.load(f)
 
-# Save enabled plugins to JSON file
+# Save enabled plugins
 def save_enabled_plugins(enabled_plugins):
     with open(ENABLED_PLUGINS_FILE, "w") as f:
         json.dump(enabled_plugins, f, indent=2)
 
-# Get list of all available plugins (by folder name)
+# List all plugins
 def list_all_plugins():
     return [
         name for name in os.listdir(PLUGIN_FOLDER)
-        if os.path.isdir(os.path.join(PLUGIN_FOLDER, name))
-        and os.path.exists(os.path.join(PLUGIN_FOLDER, name, "plugin.py"))
+        if os.path.isdir(os.path.join(PLUGIN_FOLDER, name)) or name.endswith(".py")
         and not name.startswith("__")
     ]
 
-# Enable a plugin
-def enable_plugin(plugin_name):
-    available = list_all_plugins()
-    if plugin_name not in available:
-        print(f"❌ Plugin '{plugin_name}' does not exist.")
-        return
-
+# Enable plugin
+def enable_plugin(name):
     enabled = load_enabled_plugins()
-    if plugin_name not in enabled:
-        enabled.append(plugin_name)
-        save_enabled_plugins(enabled)
-        print(f"✅ Plugin '{plugin_name}' enabled.")
-    else:
-        print(f"ℹ️ Plugin '{plugin_name}' is already enabled.")
-
-# Disable a plugin
-def disable_plugin(plugin_name):
-    enabled = load_enabled_plugins()
-    if plugin_name not in enabled:
-        print(f"❌ Plugin '{plugin_name}' is not enabled.")
+    if name in enabled and enabled[name]:
+        print(f"ℹ️ Plugin '{name}' already enabled.")
         return
-
-    enabled.remove(plugin_name)
+    enabled[name] = True
     save_enabled_plugins(enabled)
-    print(f"🛑 Plugin '{plugin_name}' disabled.")
+    print(f"✅ Plugin '{name}' enabled.")
 
-# Load enabled plugin modules
+# Disable plugin
+def disable_plugin(name):
+    enabled = load_enabled_plugins()
+    if name not in enabled or not enabled[name]:
+        print(f"ℹ️ Plugin '{name}' already disabled.")
+        return
+    enabled[name] = False
+    save_enabled_plugins(enabled)
+    print(f"🛑 Plugin '{name}' disabled.")
+
+# Load plugin modules
 def get_enabled_plugins():
     enabled = load_enabled_plugins()
     plugins = []
-    for name in enabled:
-        try:
-            module_path = f"plugins.{name}.plugin"
-            module = importlib.import_module(module_path)
-            plugins.append(module)
-        except ImportError:
-            print(f"⚠️ Failed to load plugin: {name}")
+    for name, status in enabled.items():
+        if status:
+            try:
+                module_path = f"plugins.{name}" if not name.endswith(".py") else f"plugins.{name[:-3]}"
+                module = importlib.import_module(module_path)
+                plugins.append(module)
+            except ImportError as e:
+                print(f"⚠️ Failed to load plugin '{name}': {e}")
     return plugins
 
-# Apply plugin hooks (modify context)
-def apply_plugin_hooks(context):
+# Apply plugin hooks (returns response if any)
+def apply_plugin_hooks(context, user_input):
     plugins = get_enabled_plugins()
     for plugin in plugins:
         if hasattr(plugin, "hook"):
-            context = plugin.hook(context)
-    return context
+            response = plugin.hook(user_input)
+            if response:
+                return response
+    return None
 
-# Handle typed plugin commands
+# Handle plugin commands
 def handle_plugin_command(command):
     tokens = command.strip().split()
     if len(tokens) == 2 and tokens[1] == "list":
@@ -87,6 +83,6 @@ def handle_plugin_command(command):
         elif action == "disable":
             disable_plugin(name)
         else:
-            print("❌ Unknown command. Try: plugin enable <name> or plugin disable <name>")
+            print("❌ Unknown command. Use: plugin enable <name> or plugin disable <name>")
     else:
-        print("❌ Invalid plugin command. Use: plugin list, plugin enable <name>, plugin disable <name>")
+        print("❌ Invalid plugin command. Use: plugin list, plugin enable <name>, plugin disable <name>)")
