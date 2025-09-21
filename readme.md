@@ -1,6 +1,12 @@
-# 🧠 Personal AI assistant.
+Here’s the full, copy-paste–ready `README.md` for your assistant — already styled and structured with markdown syntax:
 
- A modular, AI assistant designed for Raspberry Pi and desktop environments. Inspired by real-world robotics and fantasies, this assistant supports both voice and text interfaces and mediocre LLM-based conversation capabilities.
+---
+
+```markdown
+# 🧠 RPI-Assisted AI Assistant (formerly TARS 3.0)
+
+A modular, plugin-driven AI assistant designed for Raspberry Pi and desktop environments. Inspired by real-world robotics and space exploration, this assistant supports both voice and text interfaces, dynamic plugin management, and powerful LLM-based conversation capabilities.
+
 ---
 
 ## 🚀 Features
@@ -18,10 +24,20 @@
 ## 🛠️ Installation
 
 ```bash
-git clone https://github.com/Dhruv1401/PAI.git
-cd PAI
+git clone https://github.com/<your-username>/<repo-name>.git
+cd <repo-name>
 pip install -r requirements.txt
 ```
+
+### 🔑 Set up Hugging Face API
+Create a `.env` file in the project root:
+
+```env
+HF_TOKEN=your_huggingface_token
+MODEL_ID=mistralai/Mistral-7B-Instruct-v0.2
+```
+
+---
 
 ## 🧩 Plugin Commands
 
@@ -46,6 +62,7 @@ project_root/
 ├── core/                   # Brain logic and async handler
 ├── memory/                 # Memory management system
 ├── logs/                   # Session-based logs
+├── .env                    # API keys and model ID
 └── requirements.txt        # Python dependencies
 ```
 
@@ -65,27 +82,13 @@ project_root/
 
 ---
 
-## 🛣️ Roadmap
+## 🛤️ Roadmap
 
-### ✅ **Completed**
-- Added some basic functionalities
-- 🔧 Plugin architecture with dynamic loading
-- ✅ Chat-based command system for plugin control
-- 🔀 Voice ↔ Text interface toggling via commands
-- 🧠 Memory system storing session logs by date/time
-- 🧪 Self-diagnostics plugin for system checks
-- 🌤️ Weather plugin with real-world data
-- 🗓️ Scheduler plugin for timed tasks
-- 🐞 Debug plugin for runtime logs
-- 📃 Plugin failsafe: prevents enabling nonexistent plugins
-- 📝 Auto-list all enabled plugins at startup
-- 💬 Added error handling and feedback for invalid plugin actions
-
-### 🏗️ **Upcoming**
-- 🛞 Hardware Integration
-- 💾 Memory persistence & context injection on restart
-- 📊 Dashboard for plugin performance and logs
-
+- [ ] Add GUI overlay for interaction
+- [ ] Local model inference support
+- [ ] Emotion and tone detection
+- [ ] Hardware integration (robotics movement)
+- [ ] Auto plugin updates and sync
 
 ---
 
@@ -97,8 +100,7 @@ Have ideas or improvements? Feel free to fork the repo and open a pull request o
 
 ## 📜 License
 
-MIT License.
-(Use freely, but dont forget the credits!)
+MIT License. Use freely with attribution.
 
 ---
 
@@ -106,5 +108,9 @@ MIT License.
 
 - Mistral-7B (via Hugging Face)
 - Project architecture and vision: You (and your futuristic brain)
-- Inspiration: *TARS* from Interstellar, Raspberry Pi robotics, voice automation.
-- Made with ❤️, 🧠,ChatGPT(by openai) and lots of dedication.
+- Inspiration: *TARS* from Interstellar, Raspberry Pi robotics, voice automation
+```
+
+---
+
+You can paste this directly into your `README.md`. Once you finalize a **new name** (e.g., `NOVA`, `HALPi`, `PiMind`, etc.), I can easily update the branding line at the top for you. Let me know if you'd like suggestions for a final name!
