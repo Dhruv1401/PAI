@@ -1,35 +1,41 @@
-import tkinter as tk
-from threading import Thread
+from PyQt5 import QtWidgets, QtGui, QtCore
+import sys
 
-class Plugin:
+class Plugin(QtWidgets.QWidget):
     def __init__(self, brain, config):
+        super().__init__()
         self.brain = brain
         self.config = config
+        self.init_ui()
+
+    def init_ui(self):
+        self.setWindowTitle("Jarvis Assistant")
+        self.setGeometry(200, 200, 700, 500)
+        self.setStyleSheet("background-color: #1e1e2f; color: white; font-family: 'Consolas';")
+
+        layout = QtWidgets.QVBoxLayout()
+
+        self.chat = QtWidgets.QTextEdit()
+        self.chat.setReadOnly(True)
+        self.chat.setStyleSheet("background-color: #252539; padding: 10px; border-radius: 10px; font-size: 14px;")
+        layout.addWidget(self.chat)
+
+        self.input = QtWidgets.QLineEdit()
+        self.input.setStyleSheet("padding: 8px; border-radius: 5px; background-color: #2e2e44; font-size: 14px;")
+        self.input.returnPressed.connect(self.send_message)
+        layout.addWidget(self.input)
+
+        self.setLayout(layout)
+        self.show()
+
+    def send_message(self):
+        text = self.input.text()
+        self.input.clear()
+        self.chat.append(f"<b>You:</b> {text}")
+        response = self.brain.process_input(text)
+        self.chat.append(f"<span style='color:#77dd77;'><b>Jarvis:</b> {response}</span><br>")
 
     def run(self):
-        root = tk.Tk()
-        root.title("Jarvis Assistant")
-        root.geometry("600x400")
-
-        chat_box = tk.Text(root, state="disabled", wrap="word")
-        chat_box.pack(expand=True, fill="both")
-
-        entry = tk.Entry(root)
-        entry.pack(fill="x")
-
-        def send_message(event=None):
-            user_input = entry.get()
-            entry.delete(0, tk.END)
-
-            chat_box.config(state="normal")
-            chat_box.insert(tk.END, f"You: {user_input}\n")
-            chat_box.config(state="disabled")
-
-            response = self.brain.process_input(user_input)
-
-            chat_box.config(state="normal")
-            chat_box.insert(tk.END, f"Jarvis: {response}\n\n")
-            chat_box.config(state="disabled")
-
-        entry.bind("<Return>", send_message)
-        root.mainloop()
+        app = QtWidgets.QApplication(sys.argv)
+        self.show()
+        sys.exit(app.exec_())

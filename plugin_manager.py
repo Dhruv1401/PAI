@@ -15,7 +15,13 @@ class PluginManager:
             except Exception as e:
                 print(f"[PluginManager] Failed to load {plugin_name}: {e}")
 
+        if hasattr(self.plugins[plugin_name], "log"):
+            self.plugins[plugin_name].log(f"{plugin_name} loaded successfully")
+
+
     def run(self):
         for plugin in self.plugins.values():
             if hasattr(plugin, "run"):
                 plugin.run()
+
+
