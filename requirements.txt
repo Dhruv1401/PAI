@@ -1,4 +1,8 @@
-llama-cpp-python
-pyttsx3
+PySide6
+opencv-python
+opencv-contrib-python
+face-recognition
 speechrecognition
 pyaudio
+numpy
+pyttsx3
