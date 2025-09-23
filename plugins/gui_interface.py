@@ -1,97 +1,68 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
-import sys
+from PyQt5 import QtWidgets, QtGui, QtCore
 
-class ChatWindow(QtWidgets.QWidget):
-    def __init__(self, brain):
+class Plugin(QtWidgets.QWidget):
+    def __init__(self, config, brain, scripted, debug_logger=None):
         super().__init__()
-        self.brain = brain
-        self.init_ui()
-
-    def init_ui(self):
-        self.setWindowTitle("Jarvis Assistant")
-        self.setGeometry(200, 200, 900, 600)
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #121212;
-                color: #E0E0E0;
-                font-family: 'Segoe UI', sans-serif;
-                font-size: 14px;
-            }
-            QLineEdit {
-                padding: 8px;
-                border: 1px solid #333;
-                border-radius: 5px;
-                background-color: #1f1f1f;
-                color: white;
-            }
-            QTextEdit {
-                border: none;
-                background-color: #181818;
-                padding: 10px;
-                border-radius: 8px;
-            }
-        """)
-
-        layout = QtWidgets.QVBoxLayout(self)
-
-        # Title Bar
-        title = QtWidgets.QLabel("🧠 Jarvis AI Assistant")
-        title.setAlignment(QtCore.Qt.AlignCenter)
-        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #4FC3F7; margin: 10px;")
-        layout.addWidget(title)
-
-        # Horizontal Split
-        main_split = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-
-        # Chat Panel
-        chat_panel = QtWidgets.QWidget()
-        chat_layout = QtWidgets.QVBoxLayout(chat_panel)
-
-        self.chat = QtWidgets.QTextEdit()
-        self.chat.setReadOnly(True)
-        self.chat.setStyleSheet("color: #BBDEFB;")
-        chat_layout.addWidget(self.chat)
-
-        self.input = QtWidgets.QLineEdit()
-        self.input.returnPressed.connect(self.send_message)
-        chat_layout.addWidget(self.input)
-
-        main_split.addWidget(chat_panel)
-
-        # Debug Panel
-        debug_panel = QtWidgets.QWidget()
-        debug_layout = QtWidgets.QVBoxLayout(debug_panel)
-
-        debug_label = QtWidgets.QLabel("🔧 Debug Logs")
-        debug_label.setStyleSheet("color: #81C784; font-weight: bold;")
-        debug_layout.addWidget(debug_label)
-
-        self.debug = QtWidgets.QTextEdit()
-        self.debug.setReadOnly(True)
-        self.debug.setStyleSheet("color: #A5D6A7;")
-        debug_layout.addWidget(self.debug)
-
-        main_split.addWidget(debug_panel)
-        layout.addWidget(main_split)
-
-    def send_message(self):
-        text = self.input.text()
-        self.input.clear()
-        self.chat.append(f"<b style='color:white;'>You:</b> {text}")
-        self.debug.append(f"[User Input] {text}")
-
-        response = self.brain.process_input(text)
-
-        self.chat.append(f"<b style='color:#4FC3F7;'>Jarvis:</b> {response}<br>")
-        self.debug.append(f"[Jarvis Output] {response}")
-
-class Plugin:
-    def __init__(self, brain, config):
-        self.brain = brain
         self.config = config
+        self.brain = brain
+        self.scripted = scripted
+        self.debug_logger = debug_logger
+        self.assistant_name = config.get("assistant_name", "Assistant")
 
-    def run(self):
-        app = QtWidgets.QApplication(sys.argv)
-        window = ChatWindow(self.brain)
-        window.show()
-        sys.exit(app.exec_())
+        self.setWindowTitle(f"{self.assistant_name} - AI Assistant")
+        self.setGeometry(200, 200, 800, 600)
+
+        # --- Layout ---
+        layout = QtWidgets.QVBoxLayout()
+
+        # Chat display
+        self.chat_display = QtWidgets.QTextEdit()
+        self.chat_display.setReadOnly(True)
+        self.chat_display.setStyleSheet("background-color: #1e1e1e; color: #dcdcdc; font: 12pt Consolas;")
+        layout.addWidget(self.chat_display)
+
+        # Input + Send
+        input_layout = QtWidgets.QHBoxLayout()
+        self.input_box = QtWidgets.QLineEdit()
+        self.input_box.setStyleSheet("padding: 8px; font: 11pt Arial;")
+        self.send_button = QtWidgets.QPushButton("Send")
+        self.send_button.setStyleSheet("background-color: #0078d7; color: white; font-weight: bold; padding: 6px;")
+        input_layout.addWidget(self.input_box)
+        input_layout.addWidget(self.send_button)
+        layout.addLayout(input_layout)
+
+        # Debug panel
+        self.debug_display = QtWidgets.QTextEdit()
+        self.debug_display.setReadOnly(True)
+        self.debug_display.setStyleSheet("background-color: #2d2d2d; color: #9cdcfe; font: 10pt Consolas;")
+        layout.addWidget(QtWidgets.QLabel("Debug Output:"))
+        layout.addWidget(self.debug_display)
+
+        # Face recognition status
+        self.face_status = QtWidgets.QLabel("Face Recognition: Not Running")
+        self.face_status.setStyleSheet("color: #ffcc00; font: 10pt Arial;")
+        layout.addWidget(self.face_status)
+
+        self.setLayout(layout)
+        self.send_button.clicked.connect(self.handle_send)
+
+    def handle_send(self):
+        user_text = self.input_box.text().strip()
+        if not user_text:
+            return
+        self.chat_display.append(f"<b>You:</b> {user_text}")
+        self.input_box.clear()
+
+        # Check scripted responses
+        if self.scripted and self.scripted.can_handle(user_text):
+            reply = self.scripted.handle(user_text)
+        else:
+            reply = self.brain.process([{"role": "user", "content": user_text}], self.log_debug)
+
+        self.chat_display.append(f"<b>{self.assistant_name}:</b> {reply}")
+
+    def log_debug(self, text):
+        self.debug_display.append(text)
+
+    def update_face_status(self, status):
+        self.face_status.setText(f"Face Recognition: {status}")
