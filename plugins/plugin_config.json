@@ -1,7 +1,0 @@
-{
-  "sample_greet": true,
-  "scheduler": false,
-  "scripted_responses": true,
-  "self_diagnostics": true,
-  "weather": true
-}

@@ -1,6 +1,0 @@
-{
-  "name": "Debug Logger",
-  "id": "debug_logger",
-  "enabled": true,
-  "description": "Logs startup and runtime activity to logs/debug.log"
-}

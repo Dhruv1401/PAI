@@ -1,18 +1,2 @@
-__pycache__/
-*.pyc
-assets/
-venv/
-
-#ignore llm files
-
-memory/
-*.startup_memory.json
-
-logs/
-*.log
-.gitignore
-
-llm/mistral-7b-instruct-v0.2.Q3_K_L.gguf
-llm/models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf
-llm/models/phi-2.Q4_K_M.gguf
-llm/models/claude2-alpaca-7b.Q4_K_M.gguf
+# Ignore model files
+models/mistral-7b-instruct-v0.2.Q3_K_L.gguf

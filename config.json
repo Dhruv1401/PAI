@@ -1,0 +1,6 @@
+{
+  "wake_word": "jarvis",
+  "end_word": "over",
+  "debug": true,
+  "enabled_plugins": ["gui_interface", "scripted_responses", "debug_logger"]
+}
