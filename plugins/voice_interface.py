@@ -2,8 +2,9 @@ import speech_recognition as sr
 import threading
 
 class VoiceInterface:
-    def __init__(self, config, gui_plugin):
+    def __init__(self, config, gui_plugin, memory):
         self.gui = gui_plugin
+        self.memory = memory
         self.assistant_name = config.get("assistant_name", "Assistant")
         self.recognizer = sr.Recognizer()
         self.microphone = sr.Microphone()
@@ -32,6 +33,8 @@ class VoiceInterface:
                 text = self.recognizer.recognize_google(audio).lower()
                 if "over" in text:
                     command = " ".join(collected)
+                    self.gui.chat_display.append(f"<b>You (voice):</b> {command}")
+                    self.memory.add("user", command)  # Save transcript
                     self.gui.input_box.setText(command)
                     self.gui.handle_send()
                     break
