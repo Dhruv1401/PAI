@@ -1,41 +1,97 @@
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 import sys
 
-class Plugin(QtWidgets.QWidget):
-    def __init__(self, brain, config):
+class ChatWindow(QtWidgets.QWidget):
+    def __init__(self, brain):
         super().__init__()
         self.brain = brain
-        self.config = config
         self.init_ui()
 
     def init_ui(self):
         self.setWindowTitle("Jarvis Assistant")
-        self.setGeometry(200, 200, 700, 500)
-        self.setStyleSheet("background-color: #1e1e2f; color: white; font-family: 'Consolas';")
+        self.setGeometry(200, 200, 900, 600)
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #121212;
+                color: #E0E0E0;
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 14px;
+            }
+            QLineEdit {
+                padding: 8px;
+                border: 1px solid #333;
+                border-radius: 5px;
+                background-color: #1f1f1f;
+                color: white;
+            }
+            QTextEdit {
+                border: none;
+                background-color: #181818;
+                padding: 10px;
+                border-radius: 8px;
+            }
+        """)
 
-        layout = QtWidgets.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout(self)
+
+        # Title Bar
+        title = QtWidgets.QLabel("🧠 Jarvis AI Assistant")
+        title.setAlignment(QtCore.Qt.AlignCenter)
+        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #4FC3F7; margin: 10px;")
+        layout.addWidget(title)
+
+        # Horizontal Split
+        main_split = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+
+        # Chat Panel
+        chat_panel = QtWidgets.QWidget()
+        chat_layout = QtWidgets.QVBoxLayout(chat_panel)
 
         self.chat = QtWidgets.QTextEdit()
         self.chat.setReadOnly(True)
-        self.chat.setStyleSheet("background-color: #252539; padding: 10px; border-radius: 10px; font-size: 14px;")
-        layout.addWidget(self.chat)
+        self.chat.setStyleSheet("color: #BBDEFB;")
+        chat_layout.addWidget(self.chat)
 
         self.input = QtWidgets.QLineEdit()
-        self.input.setStyleSheet("padding: 8px; border-radius: 5px; background-color: #2e2e44; font-size: 14px;")
         self.input.returnPressed.connect(self.send_message)
-        layout.addWidget(self.input)
+        chat_layout.addWidget(self.input)
 
-        self.setLayout(layout)
-        self.show()
+        main_split.addWidget(chat_panel)
+
+        # Debug Panel
+        debug_panel = QtWidgets.QWidget()
+        debug_layout = QtWidgets.QVBoxLayout(debug_panel)
+
+        debug_label = QtWidgets.QLabel("🔧 Debug Logs")
+        debug_label.setStyleSheet("color: #81C784; font-weight: bold;")
+        debug_layout.addWidget(debug_label)
+
+        self.debug = QtWidgets.QTextEdit()
+        self.debug.setReadOnly(True)
+        self.debug.setStyleSheet("color: #A5D6A7;")
+        debug_layout.addWidget(self.debug)
+
+        main_split.addWidget(debug_panel)
+        layout.addWidget(main_split)
 
     def send_message(self):
         text = self.input.text()
         self.input.clear()
-        self.chat.append(f"<b>You:</b> {text}")
+        self.chat.append(f"<b style='color:white;'>You:</b> {text}")
+        self.debug.append(f"[User Input] {text}")
+
         response = self.brain.process_input(text)
-        self.chat.append(f"<span style='color:#77dd77;'><b>Jarvis:</b> {response}</span><br>")
+
+        self.chat.append(f"<b style='color:#4FC3F7;'>Jarvis:</b> {response}<br>")
+        self.debug.append(f"[Jarvis Output] {response}")
+
+class Plugin:
+    def __init__(self, brain, config):
+        self.brain = brain
+        self.config = config
 
     def run(self):
         app = QtWidgets.QApplication(sys.argv)
-        self.show()
+        window = ChatWindow(self.brain)
+        window.show()
         sys.exit(app.exec_())
