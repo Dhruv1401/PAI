@@ -1,49 +1,47 @@
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets, QtCore
+from plugins.face_recognition import FaceRecognition
 
 class Plugin(QtWidgets.QWidget):
-    def __init__(self, config, brain, scripted, debug_logger=None):
+    def __init__(self, config, brain, scripted, memory, debug_logger=None):
         super().__init__()
         self.config = config
         self.brain = brain
         self.scripted = scripted
+        self.memory = memory
         self.debug_logger = debug_logger
         self.assistant_name = config.get("assistant_name", "Assistant")
 
         self.setWindowTitle(f"{self.assistant_name} - AI Assistant")
-        self.setGeometry(200, 200, 800, 600)
+        self.resize(1000, 700)
 
         # --- Layout ---
-        layout = QtWidgets.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout(self)
 
-        # Chat display
-        self.chat_display = QtWidgets.QTextEdit()
-        self.chat_display.setReadOnly(True)
-        self.chat_display.setStyleSheet("background-color: #1e1e1e; color: #dcdcdc; font: 12pt Consolas;")
+        # Chat Display
+        self.chat_display = QtWidgets.QTextEdit(readOnly=True)
+        self.chat_display.setStyleSheet("background-color:#1e1e1e;color:#dcdcdc;font:12pt Consolas;")
         layout.addWidget(self.chat_display)
 
-        # Input + Send
+        # Input Row
         input_layout = QtWidgets.QHBoxLayout()
         self.input_box = QtWidgets.QLineEdit()
-        self.input_box.setStyleSheet("padding: 8px; font: 11pt Arial;")
         self.send_button = QtWidgets.QPushButton("Send")
-        self.send_button.setStyleSheet("background-color: #0078d7; color: white; font-weight: bold; padding: 6px;")
         input_layout.addWidget(self.input_box)
         input_layout.addWidget(self.send_button)
         layout.addLayout(input_layout)
 
-        # Debug panel
-        self.debug_display = QtWidgets.QTextEdit()
-        self.debug_display.setReadOnly(True)
-        self.debug_display.setStyleSheet("background-color: #2d2d2d; color: #9cdcfe; font: 10pt Consolas;")
+        # Face Recognition Feed
+        self.face_widget = FaceRecognition(config)
+        self.face_widget.setFixedHeight(250)
+        layout.addWidget(QtWidgets.QLabel("Face Recognition Feed:"))
+        layout.addWidget(self.face_widget)
+
+        # Debug Output
+        self.debug_display = QtWidgets.QTextEdit(readOnly=True)
+        self.debug_display.setStyleSheet("background-color:#2d2d2d;color:#9cdcfe;font:10pt Consolas;")
         layout.addWidget(QtWidgets.QLabel("Debug Output:"))
         layout.addWidget(self.debug_display)
 
-        # Face recognition status
-        self.face_status = QtWidgets.QLabel("Face Recognition: Not Running")
-        self.face_status.setStyleSheet("color: #ffcc00; font: 10pt Arial;")
-        layout.addWidget(self.face_status)
-
-        self.setLayout(layout)
         self.send_button.clicked.connect(self.handle_send)
 
     def handle_send(self):
@@ -52,17 +50,19 @@ class Plugin(QtWidgets.QWidget):
             return
         self.chat_display.append(f"<b>You:</b> {user_text}")
         self.input_box.clear()
+        self.memory.add("user", user_text)
 
-        # Check scripted responses
+        # Run async so GUI doesn’t freeze
+        QtCore.QTimer.singleShot(50, lambda: self.get_reply(user_text))
+
+    def get_reply(self, user_text):
         if self.scripted and self.scripted.can_handle(user_text):
             reply = self.scripted.handle(user_text)
         else:
-            reply = self.brain.process([{"role": "user", "content": user_text}], self.log_debug)
+            reply = self.brain.process(self.memory.chat_log, self.log_debug)
 
         self.chat_display.append(f"<b>{self.assistant_name}:</b> {reply}")
+        self.memory.add("assistant", reply)
 
     def log_debug(self, text):
         self.debug_display.append(text)
-
-    def update_face_status(self, status):
-        self.face_status.setText(f"Face Recognition: {status}")

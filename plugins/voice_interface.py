@@ -1,39 +1,41 @@
 import speech_recognition as sr
-import pyttsx3
 import threading
 
-class Plugin:
-    def __init__(self, brain, config):
-        self.brain = brain
-        self.config = config
-        self.running = True
+class VoiceInterface:
+    def __init__(self, config, gui_plugin):
+        self.gui = gui_plugin
+        self.assistant_name = config.get("assistant_name", "Assistant")
         self.recognizer = sr.Recognizer()
-        self.engine = pyttsx3.init()
+        self.microphone = sr.Microphone()
+        self.running = True
+        threading.Thread(target=self.listen_loop, daemon=True).start()
 
-    def speak(self, text):
-        self.engine.say(text)
-        self.engine.runAndWait()
+    def listen_loop(self):
+        while self.running:
+            with self.microphone as source:
+                print("[Voice] Listening for wake word...")
+                audio = self.recognizer.listen(source)
+            try:
+                text = self.recognizer.recognize_google(audio).lower()
+                if f"hey {self.assistant_name.lower()}" in text:
+                    self.gui.chat_display.append("<i>[Voice activated]</i>")
+                    self.listen_command()
+            except Exception:
+                continue
 
-    def listen(self):
-        with sr.Microphone() as source:
-            print("[Voice] Listening...")
-            audio = self.recognizer.listen(source)
-        try:
-            return self.recognizer.recognize_google(audio)
-        except:
-            return ""
-
-    def run(self):
-        def loop():
-            while self.running:
-                text = self.listen().lower()
-                if self.config["wake_word"] in text:
-                    self.speak("Yes?")
-                    command = self.listen().lower()
-                    if self.config["end_word"] in command:
-                        command = command.replace(self.config["end_word"], "").strip()
-                        response = self.brain.process_input(command)
-                        print(f"[Voice] {response}")
-                        self.speak(response)
-
-        threading.Thread(target=loop, daemon=True).start()
+    def listen_command(self):
+        collected = []
+        while True:
+            with self.microphone as source:
+                audio = self.recognizer.listen(source)
+            try:
+                text = self.recognizer.recognize_google(audio).lower()
+                if "over" in text:
+                    command = " ".join(collected)
+                    self.gui.input_box.setText(command)
+                    self.gui.handle_send()
+                    break
+                else:
+                    collected.append(text)
+            except:
+                continue
