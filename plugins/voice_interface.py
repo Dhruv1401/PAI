@@ -1,28 +1,25 @@
-import speech_recognition as sr
-import threading
+import threading, time, speech_recognition as sr
 
 class VoiceInterface:
-    def __init__(self, config, gui_plugin, memory):
-        self.gui = gui_plugin
-        self.memory = memory
-        self.assistant_name = config.get("assistant_name", "Assistant")
+    def __init__(self, gui):
+        self.gui = gui
         self.recognizer = sr.Recognizer()
         self.microphone = sr.Microphone()
-        self.running = True
-        threading.Thread(target=self.listen_loop, daemon=True).start()
+        threading.Thread(target=self.listen_loop,daemon=True).start()
 
     def listen_loop(self):
-        while self.running:
+        while True:
             with self.microphone as source:
-                print("[Voice] Listening for wake word...")
                 audio = self.recognizer.listen(source)
             try:
                 text = self.recognizer.recognize_google(audio).lower()
-                if f"hey {self.assistant_name.lower()}" in text:
-                    self.gui.chat_display.append("<i>[Voice activated]</i>")
+                if "hey pai" in text:
+                    self.gui.wake_label.setText("Listening...")
+                    self.gui.wake_label.setStyleSheet("color:#00ff00;font-size:16pt;")
                     self.listen_command()
-            except Exception:
-                continue
+                    self.gui.wake_label.setText("Waiting for wake word...")
+                    self.gui.wake_label.setStyleSheet("color:#ffcc00;font-size:14pt;")
+            except: pass
 
     def listen_command(self):
         collected = []
@@ -33,12 +30,9 @@ class VoiceInterface:
                 text = self.recognizer.recognize_google(audio).lower()
                 if "over" in text:
                     command = " ".join(collected)
-                    self.gui.chat_display.append(f"<b>You (voice):</b> {command}")
-                    self.memory.add("user", command)  # Save transcript
-                    self.gui.input_box.setText(command)
-                    self.gui.handle_send()
+                    self.gui.input_line.setText(command)
+                    self.gui.send_message()
                     break
                 else:
                     collected.append(text)
-            except:
-                continue
+            except: pass
