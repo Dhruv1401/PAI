@@ -2,12 +2,11 @@ import sys
 import os
 import threading
 import json
-import queue
 from datetime import datetime
 
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit,
-    QPushButton, QLabel, QTabWidget, QScrollArea, QFrame, QSplitter
+    QPushButton, QLabel, QTabWidget, QScrollArea, QSplitter
 )
 from PySide6.QtCore import Qt, Signal, QObject, QTimer
 import pyttsx3
@@ -22,6 +21,7 @@ class WorkerSignals(QObject):
     log = Signal(str)
     response = Signal(str)
     error = Signal(str)
+    typing = Signal(bool)
 
 class VoiceAssistantWorker(threading.Thread):
     def __init__(self, signals, model_path, vosk_model_path):
@@ -31,6 +31,7 @@ class VoiceAssistantWorker(threading.Thread):
         self.vosk_model_path = vosk_model_path
         self.running = True
         self.conversation_history = []
+        self.cache = {}  # Cache for input -> response
         self.engine = pyttsx3.init()
         self.load_model()
         self.load_vosk_model()
@@ -85,7 +86,9 @@ class VoiceAssistantWorker(threading.Thread):
                                 listening_for_command = False
                                 self.conversation_history.clear()
                                 continue
+                            self.signals.typing.emit(True)
                             response = self.process_command(command)
+                            self.signals.typing.emit(False)
                             self.signals.response.emit(response)
                             self.speak(response)
                             listening_for_command = False
@@ -100,6 +103,11 @@ class VoiceAssistantWorker(threading.Thread):
 
     def process_command(self, command):
         try:
+            # Check cache first
+            if command in self.cache:
+                self.signals.log.emit(f"Cache hit for command: {command}")
+                return self.cache[command]
+
             self.conversation_history.append(f"[INST] {command} [/INST]")
             if len(self.conversation_history) > 20:
                 self.conversation_history = self.conversation_history[-20:]
@@ -108,6 +116,7 @@ class VoiceAssistantWorker(threading.Thread):
             response = output['choices'][0]['text'].strip()
             self.conversation_history.append(response + "</s>")
             self.signals.log.emit(f"Response: {response}")
+            self.cache[command] = response  # Cache the response
             return response
         except Exception as e:
             self.signals.error.emit(f"Error generating response: {str(e)}")
@@ -124,6 +133,20 @@ class VoiceAssistantWorker(threading.Thread):
             self.stream.close()
         self.pa.terminate()
 
+class CommandProcessorThread(threading.Thread):
+    def __init__(self, worker, command, signals):
+        super().__init__(daemon=True)
+        self.worker = worker
+        self.command = command
+        self.signals = signals
+
+    def run(self):
+        self.signals.typing.emit(True)
+        response = self.worker.process_command(self.command)
+        self.signals.typing.emit(False)
+        self.signals.response.emit(response)
+        self.worker.speak(response)
+
 class AssistantGUI(QWidget):
     def __init__(self):
         super().__init__()
@@ -134,6 +157,7 @@ class AssistantGUI(QWidget):
         self.signals.log.connect(self.append_log)
         self.signals.response.connect(self.append_response)
         self.signals.error.connect(self.append_log)
+        self.signals.typing.connect(self.show_typing)
 
         self.init_ui()
 
@@ -142,6 +166,8 @@ class AssistantGUI(QWidget):
 
         self.worker = VoiceAssistantWorker(self.signals, model_path, vosk_model_path)
         self.worker.start()
+
+        self.typing_label = None
 
     def init_ui(self):
         layout = QVBoxLayout(self)
@@ -182,6 +208,11 @@ class AssistantGUI(QWidget):
         self.messages_scroll.setWidget(self.messages_container)
         chat_layout.addWidget(self.messages_scroll)
 
+        # Typing animation label
+        self.typing_label = QLabel("")
+        self.typing_label.setStyleSheet("font-style: italic; color: gray; padding: 5px;")
+        chat_layout.addWidget(self.typing_label)
+
         # Input row
         input_layout = QHBoxLayout()
         self.message_input = QLineEdit()
@@ -213,9 +244,9 @@ class AssistantGUI(QWidget):
         msg = QLabel(text)
         msg.setWordWrap(True)
         if msg_type == 'user':
-            msg.setStyleSheet("background: #0b6ff7; color: white; padding: 10px; border-radius: 10px;")
+            msg.setStyleSheet("background: #0b6ff7; color: white; padding: 10px; border-radius: 10px; margin: 5px;")
         else:
-            msg.setStyleSheet("background: #0fffd0; color: #002419; padding: 10px; border-radius: 10px;")
+            msg.setStyleSheet("background: #0fffd0; color: #002419; padding: 10px; border-radius: 10px; margin: 5px;")
         self.messages_layout.addWidget(msg)
         QTimer.singleShot(0, lambda: self.messages_scroll.verticalScrollBar().setValue(self.messages_scroll.verticalScrollBar().maximum()))
 
@@ -225,16 +256,21 @@ class AssistantGUI(QWidget):
 
     def append_response(self, text):
         self.append_message(text, 'bot')
-        # Speak response
-        self.worker.speak(text)
+
+    def show_typing(self, is_typing):
+        if is_typing:
+            self.typing_label.setText("Assistant is typing...")
+        else:
+            self.typing_label.setText("")
 
     def send_message(self):
         text = self.message_input.text().strip()
         if text:
             self.append_message(text, 'user')
-            response = self.worker.process_command(text)
-            self.append_response(response)
             self.message_input.clear()
+            # Run command processing in a separate thread
+            thread = CommandProcessorThread(self.worker, text, self.signals)
+            thread.start()
 
     def closeEvent(self, event):
         self.worker.stop()
