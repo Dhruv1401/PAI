@@ -1,4 +1,8 @@
 #ignore models folder
 models/
+<<<<<<< HEAD
 /vosk-model-small-en-us-0.15
+=======
+
+>>>>>>> 18b2b45cc6539843ac748fde3f9df90ee3f1d061
 venv/
