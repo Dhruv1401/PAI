@@ -153,6 +153,11 @@ class AssistantGUI(QWidget):
         self.setWindowTitle("Assistant")
         self.setGeometry(100, 100, 1100, 700)
 
+        self.typing_label = QLabel("")  # Initialize early to avoid NoneType errors
+
+        self.dark_theme = True
+        self.apply_theme()
+
         self.signals = WorkerSignals()
         self.signals.log.connect(self.append_log)
         self.signals.response.connect(self.append_response)
@@ -167,7 +172,31 @@ class AssistantGUI(QWidget):
         self.worker = VoiceAssistantWorker(self.signals, model_path, vosk_model_path)
         self.worker.start()
 
-        self.typing_label = None
+    def apply_theme(self):
+        if self.dark_theme:
+            self.setStyleSheet("""
+                QWidget { background: #0f1115; color: #e6eef2; }
+                QLineEdit, QTextEdit { background: #121419; border-radius: 10px; padding: 8px; color: #e6eef2; }
+                QPushButton { background: #00d1a1; color: #04201b; border-radius: 10px; padding: 10px; }
+                QPushButton:hover { background: #00b388; }
+                QTabWidget::pane { background: #121419; border-radius: 12px; }
+                QTabBar::tab { background: transparent; color: #9aa3ad; padding: 8px; border-radius: 8px; }
+                QTabBar::tab:selected { background: #1a9b8f; color: #00d1a1; }
+            """)
+        else:
+            self.setStyleSheet("""
+                QWidget { background: #f7f9fb; color: #222; }
+                QLineEdit, QTextEdit { background: #fff; border-radius: 10px; padding: 8px; color: #222; }
+                QPushButton { background: #00796b; color: white; border-radius: 10px; padding: 10px; }
+                QPushButton:hover { background: #004d40; }
+                QTabWidget::pane { background: #fff; border-radius: 12px; }
+                QTabBar::tab { background: transparent; color: #607d8b; padding: 8px; border-radius: 8px; }
+                QTabBar::tab:selected { background: #00796b; color: #fff; }
+            """)
+
+    def toggle_theme(self):
+        self.dark_theme = not self.dark_theme
+        self.apply_theme()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
@@ -178,19 +207,23 @@ class AssistantGUI(QWidget):
         brand_layout = QHBoxLayout()
         logo = QLabel("A")
         logo.setFixedSize(48, 48)
-        logo.setStyleSheet("background: #053241; color: white; font-size: 24px; font-weight: bold; border-radius: 10px;")
+        logo.setStyleSheet("background: linear-gradient(135deg,#053241,#02393a); color: white; font-size: 24px; font-weight: bold; border-radius: 10px;")
         logo.setAlignment(Qt.AlignCenter)
         brand_layout.addWidget(logo)
         title_layout = QVBoxLayout()
         title = QLabel("Assistant")
-        title.setStyleSheet("font-weight: bold;")
+        title.setStyleSheet("font-weight: 700;")
         subtitle = QLabel("Powered by Local LLM")
-        subtitle.setStyleSheet("color: gray; font-size: 12px;")
+        subtitle.setStyleSheet("color: #9aa3ad; font-size: 12px;")
         title_layout.addWidget(title)
         title_layout.addWidget(subtitle)
         brand_layout.addLayout(title_layout)
         header_layout.addLayout(brand_layout)
         header_layout.addStretch()
+        self.theme_toggle_btn = QPushButton("Light")
+        self.theme_toggle_btn.setFixedWidth(60)
+        self.theme_toggle_btn.clicked.connect(self.toggle_theme)
+        header_layout.addWidget(self.theme_toggle_btn)
         layout.addLayout(header_layout)
 
         # Main content
@@ -210,7 +243,7 @@ class AssistantGUI(QWidget):
 
         # Typing animation label
         self.typing_label = QLabel("")
-        self.typing_label.setStyleSheet("font-style: italic; color: gray; padding: 5px;")
+        self.typing_label.setStyleSheet("font-style: italic; color: #9aa3ad; padding: 5px;")
         chat_layout.addWidget(self.typing_label)
 
         # Input row
@@ -233,20 +266,37 @@ class AssistantGUI(QWidget):
         self.side_tabs = QTabWidget()
         self.log_tab = QTextEdit()
         self.log_tab.setReadOnly(True)
-        self.settings_tab = QLabel("Settings panel - Coming soon")
+        self.settings_tab = QWidget()
+        settings_layout = QVBoxLayout(self.settings_tab)
+        self.theme_label = QLabel("Theme:")
+        settings_layout.addWidget(self.theme_label)
+        self.theme_light_btn = QPushButton("Light")
+        self.theme_dark_btn = QPushButton("Dark")
+        self.theme_light_btn.clicked.connect(self.set_light_theme)
+        self.theme_dark_btn.clicked.connect(self.set_dark_theme)
+        settings_layout.addWidget(self.theme_light_btn)
+        settings_layout.addWidget(self.theme_dark_btn)
         self.side_tabs.addTab(self.log_tab, "Log")
         self.side_tabs.addTab(self.settings_tab, "Settings")
         side_layout.addWidget(self.side_tabs)
         main_splitter.addWidget(side_widget)
         main_splitter.setStretchFactor(1, 1)
 
+    def set_light_theme(self):
+        self.dark_theme = False
+        self.apply_theme()
+
+    def set_dark_theme(self):
+        self.dark_theme = True
+        self.apply_theme()
+
     def append_message(self, text, msg_type):
         msg = QLabel(text)
         msg.setWordWrap(True)
         if msg_type == 'user':
-            msg.setStyleSheet("background: #0b6ff7; color: white; padding: 10px; border-radius: 10px; margin: 5px;")
+            msg.setStyleSheet("background: linear-gradient(90deg,#0b6ff7,#1a9bff); color: white; padding: 10px; border-radius: 10px; margin: 5px;")
         else:
-            msg.setStyleSheet("background: #0fffd0; color: #002419; padding: 10px; border-radius: 10px; margin: 5px;")
+            msg.setStyleSheet("background: linear-gradient(90deg,#0fffd0,#70f2c3); color: #002419; padding: 10px; border-radius: 10px; margin: 5px;")
         self.messages_layout.addWidget(msg)
         QTimer.singleShot(0, lambda: self.messages_scroll.verticalScrollBar().setValue(self.messages_scroll.verticalScrollBar().maximum()))
 
@@ -258,10 +308,14 @@ class AssistantGUI(QWidget):
         self.append_message(text, 'bot')
 
     def show_typing(self, is_typing):
-        if is_typing:
-            self.typing_label.setText("Assistant is typing...")
-        else:
-            self.typing_label.setText("")
+        try:
+            if self.typing_label is not None:
+                if is_typing:
+                    self.typing_label.setText("Assistant is typing...")
+                else:
+                    self.typing_label.setText("")
+        except Exception as e:
+            self.append_log(f"Error in show_typing: {str(e)}")
 
     def send_message(self):
         text = self.message_input.text().strip()
