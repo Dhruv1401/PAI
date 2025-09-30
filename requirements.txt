@@ -1,7 +1,8 @@
-PySide6==6.9.2
+flask
+flask-socketio
+eventlet
+llama-cpp-python
+vosk
 pyttsx3
-speechrecognition
-opencv-python
-mediapipe
-pyqtgraph
-numpy
+pyaudio
+requests

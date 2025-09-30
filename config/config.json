@@ -1,5 +1,0 @@
-{
-  "assistant_name": "PAI",
-  "plugins_enabled": ["gui_interface", "scripted_responses", "debug_logger"],
-  "face_recognition_enabled": true
-}
