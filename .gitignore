@@ -1,2 +1,4 @@
 #ignore models folder
 models/
+/vosk-model-small-en-us-0.15
+venv/
