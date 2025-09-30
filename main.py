@@ -9,17 +9,19 @@ from PySide6.QtWidgets import (
     QPushButton, QLabel, QTabWidget, QScrollArea, QSplitter
 )
 from PySide6.QtCore import Qt, Signal, QObject, QTimer
+import itertools
 import pyttsx3
 import pyaudio
 import vosk
 from llama_cpp import Llama
 
-WAKE_WORD = "hey computer"
+WAKE_WORD = "tara"
 END_WORD = "over"
 
 class WorkerSignals(QObject):
     log = Signal(str)
     response = Signal(str)
+    partial_response = Signal(str)
     error = Signal(str)
     typing = Signal(bool)
 
@@ -41,7 +43,7 @@ class VoiceAssistantWorker(threading.Thread):
 
     def load_model(self):
         self.signals.log.emit(f"Loading model from {self.model_path} ...")
-        self.llm = Llama(model_path=self.model_path, n_ctx=2048, n_threads=4)
+        self.llm = Llama(model_path=self.model_path, n_ctx=1024, n_threads=2)  # Optimized for RPi4 2GB RAM
         self.signals.log.emit("Model loaded.")
 
     def load_vosk_model(self):
@@ -61,7 +63,7 @@ class VoiceAssistantWorker(threading.Thread):
                 frames_per_buffer=8000
             )
             self.rec = vosk.KaldiRecognizer(self.vosk_model, 16000)
-            self.signals.log.emit("Listening for wake word 'hey computer'...")
+            self.signals.log.emit("Listening for wake word 'tara'...")
             listening_for_command = False
 
             while self.running:
@@ -108,13 +110,25 @@ class VoiceAssistantWorker(threading.Thread):
                 self.signals.log.emit(f"Cache hit for command: {command}")
                 return self.cache[command]
 
-            self.conversation_history.append(f"[INST] {command} [/INST]")
+            # Append user message as tuple
+            self.conversation_history.append(("user", command))
             if len(self.conversation_history) > 20:
                 self.conversation_history = self.conversation_history[-20:]
-            prompt = "".join(self.conversation_history)
+
+            # Build prompt with proper formatting
+            prompt = ""
+            for role, content in self.conversation_history:
+                if role == "user":
+                    prompt += f"[INST] {content} [/INST]"
+                elif role == "assistant":
+                    prompt += f"{content}</s>"
+
             output = self.llm(prompt, max_tokens=150, stop=["</s>"], echo=False)
             response = output['choices'][0]['text'].strip()
-            self.conversation_history.append(response + "</s>")
+
+            # Append assistant response as tuple
+            self.conversation_history.append(("assistant", response))
+
             self.signals.log.emit(f"Response: {response}")
             self.cache[command] = response  # Cache the response
             return response
@@ -141,36 +155,74 @@ class CommandProcessorThread(threading.Thread):
         self.signals = signals
 
     def run(self):
+        import time
+        import threading
         self.signals.typing.emit(True)
-        response = self.worker.process_command(self.command)
+        full_response = self.worker.process_command(self.command)
+
+        # Run speech synthesis in a separate thread to allow simultaneous speaking and streaming
+        def speak_async(text):
+            self.worker.speak(text)
+
+        speak_thread = threading.Thread(target=speak_async, args=(full_response,), daemon=True)
+        speak_thread.start()
+
+        # Simulate streaming by emitting partial responses word by word
+        words = full_response.split()
+        partial = ""
+        for word in words:
+            if partial:
+                partial += " "
+            partial += word
+            self.signals.partial_response.emit(partial)
+            time.sleep(0.2)  # small delay to simulate streaming word by word
         self.signals.typing.emit(False)
-        self.signals.response.emit(response)
-        self.worker.speak(response)
+        # Remove emitting full response again to avoid duplicate message
+        # self.signals.response.emit(full_response)
 
 class AssistantGUI(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Assistant")
+        self.setWindowTitle("TARA")
         self.setGeometry(100, 100, 1100, 700)
+        self.setMinimumSize(600, 400)
 
         self.typing_label = QLabel("")  # Initialize early to avoid NoneType errors
 
         self.dark_theme = True
         self.apply_theme()
 
+        # Typing animation setup
+        self.typing_animation_timer = QTimer()
+        self.typing_animation_timer.setInterval(500)  # 500 ms interval
+        self.typing_animation_timer.timeout.connect(self.update_typing_animation)
+        self.typing_animation_iterator = itertools.cycle([
+            "TARA is typing",
+            "TARA is typing.",
+            "TARA is typing..",
+            "TARA is typing..."
+        ])
+
+        # Improve typing label style for readability
+        self.typing_label.setStyleSheet("font-style: italic; color: #00ffff; font-size: 16pt; padding: 5px;")
+
         self.signals = WorkerSignals()
         self.signals.log.connect(self.append_log)
         self.signals.response.connect(self.append_response)
+        self.signals.partial_response.connect(self.append_partial_response)
         self.signals.error.connect(self.append_log)
         self.signals.typing.connect(self.show_typing)
 
         self.init_ui()
 
-        model_path = "models/mistral-7b-instruct-v0.2.Q3_K_L.gguf"
+        model_path = "models/mistral-7b-instruct-v0.2.Q3_K_L.gguf"  # Lightweight model for RPi4 2GB RAM
         vosk_model_path = "models/vosk-model-small-en-us-0.15"
 
         self.worker = VoiceAssistantWorker(self.signals, model_path, vosk_model_path)
         self.worker.start()
+
+        # Display previous conversation history in the chat GUI
+        self.load_conversation_history()
 
     def apply_theme(self):
         if self.dark_theme:
@@ -205,13 +257,13 @@ class AssistantGUI(QWidget):
         # Header
         header_layout = QHBoxLayout()
         brand_layout = QHBoxLayout()
-        logo = QLabel("A")
+        logo = QLabel("T")
         logo.setFixedSize(48, 48)
         logo.setStyleSheet("background: linear-gradient(135deg,#053241,#02393a); color: white; font-size: 24px; font-weight: bold; border-radius: 10px;")
         logo.setAlignment(Qt.AlignCenter)
         brand_layout.addWidget(logo)
         title_layout = QVBoxLayout()
-        title = QLabel("Assistant")
+        title = QLabel("TARA")
         title.setStyleSheet("font-weight: 700;")
         subtitle = QLabel("Powered by Local LLM")
         subtitle.setStyleSheet("color: #9aa3ad; font-size: 12px;")
@@ -245,6 +297,11 @@ class AssistantGUI(QWidget):
         self.typing_label = QLabel("")
         self.typing_label.setStyleSheet("font-style: italic; color: #9aa3ad; padding: 5px;")
         chat_layout.addWidget(self.typing_label)
+
+        # Bot loading animation label
+        self.bot_loading_label = QLabel("")
+        self.bot_loading_label.setStyleSheet("font-style: italic; color: #00ffff; font-size: 14pt; padding: 5px;")
+        chat_layout.addWidget(self.bot_loading_label)
 
         # Input row
         input_layout = QHBoxLayout()
@@ -293,10 +350,18 @@ class AssistantGUI(QWidget):
     def append_message(self, text, msg_type):
         msg = QLabel(text)
         msg.setWordWrap(True)
+        font = msg.font()
+        font.setPointSize(14)  # Increase font size
+        msg.setFont(font)
         if msg_type == 'user':
-            msg.setStyleSheet("background: linear-gradient(90deg,#0b6ff7,#1a9bff); color: white; padding: 10px; border-radius: 10px; margin: 5px;")
+            msg.setStyleSheet("background: linear-gradient(90deg,#0b6ff7,#1a9bff); color: white; padding: 10px; border-radius: 10px; margin: 5px; font-size: 14pt;")
         else:
-            msg.setStyleSheet("background: linear-gradient(90deg,#0fffd0,#70f2c3); color: #002419; padding: 10px; border-radius: 10px; margin: 5px;")
+            if self.dark_theme:
+                # Different color for dark mode bot messages, text color white
+                msg.setStyleSheet("background: linear-gradient(90deg,#ff9f43,#ff6f00); color: white; padding: 10px; border-radius: 10px; margin: 5px; font-size: 14pt;")
+            else:
+                # Light mode bot messages, text color black
+                msg.setStyleSheet("background: linear-gradient(90deg,#0fffd0,#70f2c3); color: black; padding: 10px; border-radius: 10px; margin: 5px; font-size: 14pt;")
         self.messages_layout.addWidget(msg)
         QTimer.singleShot(0, lambda: self.messages_scroll.verticalScrollBar().setValue(self.messages_scroll.verticalScrollBar().maximum()))
 
@@ -307,13 +372,40 @@ class AssistantGUI(QWidget):
     def append_response(self, text):
         self.append_message(text, 'bot')
 
+    def append_partial_response(self, text):
+        # Append or update the last bot message with partial text and blinking cursor
+        if self.messages_layout.count() == 0:
+            self.append_message(text + " |", 'bot')
+        else:
+            last_msg = self.messages_layout.itemAt(self.messages_layout.count() - 1).widget()
+            if last_msg:
+                last_msg.setText(text + " |")
+        QTimer.singleShot(0, lambda: self.messages_scroll.verticalScrollBar().setValue(self.messages_scroll.verticalScrollBar().maximum()))
+
+    def load_conversation_history(self):
+        # Display previous conversation history in the chat GUI
+        for msg in self.worker.conversation_history:
+            # Filter out empty or control tokens
+            if msg.strip() and not msg.startswith("[INST]") and not msg.endswith("[/INST]"):
+                self.append_message(msg, 'bot')
+
     def show_typing(self, is_typing):
         try:
             if self.typing_label is not None:
                 if is_typing:
-                    self.typing_label.setText("Assistant is typing...")
+                    self.typing_animation_timer.start()
+                    self.bot_loading_label.setText("Loading...")
                 else:
+                    self.typing_animation_timer.stop()
                     self.typing_label.setText("")
+                    self.bot_loading_label.setText("")
+                    # Remove blinking cursor from last bot message
+                    if self.messages_layout.count() > 0:
+                        last_msg = self.messages_layout.itemAt(self.messages_layout.count() - 1).widget()
+                        if last_msg:
+                            text = last_msg.text()
+                            if text.endswith(" |"):
+                                last_msg.setText(text[:-2])
         except Exception as e:
             self.append_log(f"Error in show_typing: {str(e)}")
 
@@ -325,6 +417,10 @@ class AssistantGUI(QWidget):
             # Run command processing in a separate thread
             thread = CommandProcessorThread(self.worker, text, self.signals)
             thread.start()
+
+    def update_typing_animation(self):
+        next_text = next(self.typing_animation_iterator)
+        self.typing_label.setText(next_text)
 
     def closeEvent(self, event):
         self.worker.stop()

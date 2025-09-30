@@ -1,2 +1,4 @@
 #ignore models folder
 models/
+
+venv/
