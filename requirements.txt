@@ -6,3 +6,6 @@ vosk
 pyttsx3
 pyaudio
 requests
+PySide6
+python-socketio
+speech_recognition
