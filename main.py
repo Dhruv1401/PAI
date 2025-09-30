@@ -215,13 +215,9 @@ class AssistantGUI(QWidget):
 
         self.init_ui()
 
-<<<<<<< HEAD
         model_path = "mistral-7b-instruct-v0.2.Q3_K_L.gguf"  # Lightweight model for RPi4 2GB RAM
         vosk_model_path = "vosk-model-small-en-us-0.15"
-=======
-        model_path = "models/mistral-7b-instruct-v0.2.Q3_K_L.gguf"  # Lightweight model for RPi4 2GB RAM
-        vosk_model_path = "models/vosk-model-small-en-us-0.15"
->>>>>>> 18b2b45cc6539843ac748fde3f9df90ee3f1d061
+
 
         self.worker = VoiceAssistantWorker(self.signals, model_path, vosk_model_path)
         self.worker.start()
